@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>데이즈온 고객 여정맵 워크숍 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --p:#f39c12; --pl:#fff8ed; --pb:#f5c96a; --pd:#92400e;
+  --bg:#f4f3ef; --card:#fff; --border:#e8e4dc;
+  --text:#1a1a1a; --sub:#888;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;}
+
+/* HEADER */
+.header{background:#fff;border-bottom:1.5px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:200;}
+.logo{font-size:14px;font-weight:700;color:var(--p);}
+.header-date{font-size:11px;color:var(--sub);}
+
+/* TABS */
+.tabs{padding:16px 24px 0;display:flex;gap:8px;flex-wrap:wrap;}
+.tab-btn{padding:8px 18px;border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;color:var(--sub);transition:all .18s;white-space:nowrap;}
+.tab-btn:hover{border-color:#ccc;color:#333;}
+.tab-btn.active{background:var(--p);border-color:var(--p);color:#fff;}
+
+/* SECTION */
+.section{display:none;padding:20px 20px 60px;}
+.section.active{display:block;}
+
+/* MAIN GRID */
+.mg{display:grid;grid-template-columns:200px 1fr;gap:20px;}
+
+/* ── LEFT ── */
+.left{display:flex;flex-direction:column;gap:14px;}
+
+.pcard{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px 12px;text-align:center;position:relative;overflow:hidden;}
+.pcard::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:var(--pl);opacity:.8;}
+.avt{width:52px;height:52px;border-radius:50%;background:var(--pl);border:2px solid var(--pb);font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;position:relative;z-index:1;}
+.pname{font-size:14px;font-weight:700;margin-bottom:2px;}
+.psub{font-size:10px;color:var(--sub);margin-bottom:8px;line-height:1.4;}
+.ptag{display:inline-block;background:var(--pl);color:var(--pd);border:1px solid var(--pb);border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;margin-bottom:8px;}
+
+.kpi-list{border-top:1px dashed #e0ddd5;padding-top:12px;text-align:left;}
+.kpi-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid #f5f4f0;gap:4px;}
+.kl{font-size:10px;color:var(--sub);font-weight:500;flex-shrink:0;white-space:nowrap;}
+.kv{font-size:10px;font-weight:700;color:var(--pd);text-align:right;}
+.kv.danger{color:#dc2626;}
+.kv.ok{color:#374151;font-weight:500;}
+
+.qbox{background:#fff;border:1.5px solid var(--pb);border-left:4px solid var(--p);border-radius:12px;padding:12px 14px;}
+.qbox h4{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pd);margin-bottom:7px;}
+.qbox p{font-size:11px;line-height:1.7;color:#444;}
+
+/* ── RIGHT ── */
+.right{display:flex;flex-direction:column;gap:18px;}
+
+/* JOURNEY TITLE */
+.jtitle{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.jsub{font-size:12px;color:var(--sub);}
+
+/* SCENE CARDS ROW */
+.scenes-wrap{overflow-x:auto;padding-bottom:8px;}
+.scenes{display:flex;gap:14px;min-width:max-content;}
+
+.scene-card{
+  width:170px;flex-shrink:0;
+  background:#fff;border:1.5px solid var(--border);border-radius:14px;
+  overflow:hidden;position:relative;cursor:default;
+  transition:transform .15s, box-shadow .15s;
+}
+.scene-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08);}
+.scene-card.key{border-color:var(--p);border-width:2px;}
+.scene-card.bad{border-color:#ef4444;border-width:2px;}
+
+/* scene illustration */
+.scene-illust{
+  height:110px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  background:var(--pl);
+}
+.scene-illust svg{width:100%;height:100%;}
+
+/* scene badge (top label) */
+.scene-badge{
+  position:absolute;top:8px;left:8px;
+  background:rgba(255,255,255,.9);border-radius:6px;
+  padding:2px 8px;font-size:10px;font-weight:700;color:var(--pd);
+  backdrop-filter:blur(4px);
+}
+.scene-card.key .scene-badge{background:var(--p);color:#fff;}
+.scene-card.bad .scene-badge{background:#ef4444;color:#fff;}
+
+/* scene time */
+.scene-time{font-size:13px;font-weight:700;color:var(--text);padding:10px 12px 0;}
+.scene-icon{font-size:18px;position:absolute;top:8px;right:10px;}
+
+/* scene stage */
+.scene-stage{font-size:10px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.07em;padding:4px 12px 0;}
+.scene-card.bad .scene-stage{color:#ef4444;}
+
+/* scene label */
+.scene-label{font-size:12px;font-weight:600;padding:3px 12px 0;color:var(--text);}
+
+/* scene notes */
+.scene-notes{padding:5px 12px 12px;font-size:10px;color:var(--sub);line-height:1.5;}
+.scene-notes li{margin-left:12px;}
+
+/* ARROW between cards */
+.sc-arrow{display:flex;align-items:center;align-self:center;flex-shrink:0;margin-top:-20px;}
+.sc-arrow svg{width:28px;height:28px;}
+
+/* PURCHASE INTENT */
+.intent-wrap{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:16px 20px;}
+.intent-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#bbb;margin-bottom:12px;}
+.intent-dots{display:flex;gap:0;align-items:flex-end;height:48px;position:relative;}
+.intent-track{position:absolute;bottom:0;left:0;right:0;height:2px;background:#f0ede6;border-radius:1px;}
+.i-dot{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.i-circle{
+  width:16px;height:16px;border-radius:50%;border:2.5px solid;
+  background:#fff;position:relative;z-index:1;transition:all .2s;
+}
+.i-label{font-size:9px;color:var(--sub);white-space:nowrap;}
+/* svg line for intent curve */
+.intent-svg{width:100%;overflow:visible;}
+
+/* GRID TABLE */
+.gtable-wrap{background:#fff;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;}
+.gt{width:100%;border-collapse:collapse;}
+.gt td{border:1px solid #ede9e0;padding:8px 10px;font-size:11px;vertical-align:top;line-height:1.5;}
+.gt .rl{background:#faf9f6;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.07em;text-align:center;width:50px;}
+.gt .sh{background:var(--pl);color:var(--pd);font-weight:700;font-size:11px;text-align:center;border-top:3px solid var(--p);}
+.gt .sh.bad{background:#fef2f2;color:#991b1b;border-top-color:#ef4444;}
+.gt .em{font-size:18px;text-align:center;vertical-align:middle;padding:9px;}
+.chip{display:inline-block;font-size:10px;border-radius:10px;padding:2px 7px;margin:2px 2px 2px 0;border:1px solid;}
+.cb{background:#edf4ff;color:#1e40af;border-color:#bfdbfe;}
+.cg{background:#edfaf3;color:#14532d;border-color:#6ee7a8;}
+.co{background:#fff8ed;color:#92400e;border-color:#fde68a;}
+.cr{background:#fef2f2;color:#991b1b;border-color:#fca5a5;}
+.cp{background:#fdf4ff;color:#4c1d95;border-color:#d8b4fe;}
+.cn{background:#f5f4f0;color:#666;border-color:#e0ddd5;}
+.good{background:#edfaf3;color:#14532d;border-color:#6ee7a8;}
+.bad2{background:#fef2f2;color:#991b1b;border-color:#fca5a5;}
+.warn{background:#fffbeb;color:#92400e;border-color:#fde68a;}
+
+/* WORKSHOP BAR */
+.ws-bar{background:var(--p);border-radius:12px;padding:14px 22px;display:flex;align-items:flex-start;gap:16px;}
+.ws-bar-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;padding-top:1px;}
+.ws-bar-q{font-size:13px;color:#fff;line-height:1.7;}
+
+@media(max-width:900px){.mg{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">DaysOn CJM Dashboard</div>
+  <div class="header-date">2026.05.14 전략 워크숍용</div>
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" onclick="showTab('alpha',this,'#f39c12','#fff8ed','#f5c96a','#92400e')">① 알파CD</button>
+  <button class="tab-btn" onclick="showTab('paradise',this,'#1d6fd6','#edf4ff','#93c5fd','#1e3a8a')">② 파라다이스그레인</button>
+  <button class="tab-btn" onclick="showTab('pre',this,'#16a34a','#edfaf3','#6ee7a8','#14532d')">③ 프리바이오틱스</button>
+  <button class="tab-btn" onclick="showTab('yeast',this,'#ea580c','#fff1ee','#fca07a','#7c2d12')">④ 맥주효모</button>
+  <button class="tab-btn" onclick="showTab('green',this,'#9333ea','#fdf4ff','#d8b4fe','#4c1d95')">⑤ 그린아세로라</button>
+</nav>
+
+<!-- ══════════════════════════════════════════
+  ① 알파CD
+══════════════════════════════════════════ -->
+<div id="alpha" class="section active">
+<div class="mg">
+  <div class="left">
+    <div class="pcard">
+      <div class="avt">🧍‍♀️</div>
+      <div class="ptag">💊 지방 흡착·배출 다이어트</div>
+      <div class="pname">김미영, 48세</div>
+      <div class="psub">서울 근교 · 파트타임<br>주 4일, 오전 10~오후 3시 · 3인 가구</div>
+      <div class="kpi-list">
+        <div class="kpi-row"><span class="kl">전환매출 비중</span><span class="kv">29.0% (전 연령 1위)</span></div>
+        <div class="kpi-row"><span class="kl">클릭당 전환매출</span><span class="kv">4,073원</span></div>
+        <div class="kpi-row"><span class="kl">검색량 추이</span><span class="kv danger">-77% 급감</span></div>
+        <div class="kpi-row"><span class="kl">주요 고민</span><span class="kv ok">체중 증가, 살 빼고 싶음</span></div>
+      </div>
+    </div>
+    <div class="qbox">
+      <h4>🎯 워크숍 핵심 질문</h4>
+      <p>쿠팡 1P 소멸 이후 "김미영"은 어디서 구매하는가, 이탈했는가?<br>검색량 -77% 상황에서 이 고객에게 다시 도달할 채널은?</p>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <div class="jtitle">김미영 님의 평일 구매 여정</div>
+      <div class="jsub">알파CD · 지방 흡착·배출 다이어트 식품</div>
+    </div>
+
+    <!-- Scene cards -->
+    <div class="scenes-wrap">
+    <div class="scenes">
+
+      <!-- 06:30 -->
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#faf8f3;">
+          <svg viewBox="0 0 170 110"><rect x="20" y="30" width="130" height="65" rx="8" fill="#ede9e0"/><rect x="35" y="40" width="100" height="45" rx="6" fill="#f5f0e8"/><ellipse cx="85" cy="58" rx="30" ry="18" fill="#fff" opacity=".6"/><text x="85" y="63" text-anchor="middle" font-size="22">🛏️</text><rect x="0" y="0" width="170" height="110" fill="none"/></svg>
+        </div>
+        <div class="scene-icon">🌙</div>
+        <div class="scene-time">06:30 AM</div>
+        <div class="scene-stage">Wake up</div>
+        <div class="scene-label">기상</div>
+        <ul class="scene-notes"><li>스마트폰으로 뉴스·SNS 확인</li><li>오전 일과 시작</li></ul>
+      </div>
+
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+
+      <!-- 09:30 인지 -->
+      <div class="scene-card key">
+        <div class="scene-illust" style="background:#fff8ed;">
+          <svg viewBox="0 0 170 110"><rect x="30" y="20" width="110" height="70" rx="10" fill="#fff" stroke="#f5c96a" stroke-width="1.5"/><rect x="40" y="30" width="90" height="50" rx="7" fill="#fff8ed"/><text x="85" y="62" text-anchor="middle" font-size="28">💬</text><text x="85" y="84" text-anchor="middle" font-size="9" fill="#c47f00" font-weight="700">카카오톡</text></svg>
+        </div>
+        <div class="scene-badge">인지 접점</div>
+        <div class="scene-icon">💬</div>
+        <div class="scene-time">09:30 AM</div>
+        <div class="scene-stage">AWARENESS</div>
+        <div class="scene-label">카카오톡 인지</div>
+        <ul class="scene-notes"><li>지인 단체방</li><li>"알파CD 먹었더니<br>살 빠지더라!"</li></ul>
+      </div>
+
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#f5c96a" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+
+      <!-- 12:00 검색 (KEY) -->
+      <div class="scene-card key">
+        <div class="scene-illust" style="background:#fff8ed;">
+          <svg viewBox="0 0 170 110"><rect x="25" y="15" width="120" height="80" rx="10" fill="#fff" stroke="#f39c12" stroke-width="2"/><rect x="35" y="25" width="100" height="60" rx="7" fill="#faf9f6"/><text x="85" y="55" text-anchor="middle" font-size="10" fill="#f39c12" font-weight="700">NAVER</text><text x="85" y="68" text-anchor="middle" font-size="9" fill="#888">알파CD</text><rect x="45" y="72" width="80" height="6" rx="3" fill="#f5c96a" opacity=".6"/><text x="145" y="28" text-anchor="middle" font-size="14">🔍</text></svg>
+        </div>
+        <div class="scene-badge">검색 접점</div>
+        <div class="scene-icon">🔍</div>
+        <div class="scene-time">12:00 PM</div>
+        <div class="scene-stage">CONSIDERATION</div>
+        <div class="scene-label">네이버 검색</div>
+        <ul class="scene-notes"><li>점심시간 검색</li><li>지방 흡착 성분 확인</li><li>클릭당 전환 4,073원</li></ul>
+      </div>
+
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#f39c12" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+
+      <!-- 15:00 퇴근 -->
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#faf8f3;">
+          <svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="40">🛒</text></svg>
+        </div>
+        <div class="scene-icon">🏠</div>
+        <div class="scene-time">03:00 PM</div>
+        <div class="scene-stage">REINFORCEMENT</div>
+        <div class="scene-label">퇴근 후 쿠팡</div>
+        <ul class="scene-notes"><li>생필품 정기 주문</li><li>쿠팡 앱 루틴</li></ul>
+      </div>
+
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+
+      <!-- 21:00 홈쇼핑 -->
+      <div class="scene-card key">
+        <div class="scene-illust" style="background:#fff8ed;">
+          <svg viewBox="0 0 170 110"><rect x="20" y="20" width="130" height="75" rx="8" fill="#1a1a2e"/><rect x="26" y="26" width="118" height="60" rx="5" fill="#16213e"/><text x="85" y="62" text-anchor="middle" font-size="28">📺</text><rect x="60" y="88" width="50" height="5" rx="2.5" fill="#888"/></svg>
+        </div>
+        <div class="scene-badge">구매 결정</div>
+        <div class="scene-icon">📺</div>
+        <div class="scene-time">09:00 PM</div>
+        <div class="scene-stage">DECISION</div>
+        <div class="scene-label">홈쇼핑 → 재검색</div>
+        <ul class="scene-notes"><li>TV 시청 중 재노출</li><li>침대에서 스마트폰</li><li>가격 비교 후 결정</li></ul>
+      </div>
+
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#f39c12" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+
+      <!-- 22:30 구매 -->
+      <div class="scene-card key">
+        <div class="scene-illust" style="background:#fff8ed;">
+          <svg viewBox="0 0 170 110"><circle cx="85" cy="55" r="35" fill="#f39c12" opacity=".15"/><circle cx="85" cy="55" r="26" fill="#f39c12" opacity=".3"/><text x="85" y="63" text-anchor="middle" font-size="28">✅</text></svg>
+        </div>
+        <div class="scene-badge">구매 완료</div>
+        <div class="scene-icon">🛒</div>
+        <div class="scene-time">10:00 PM</div>
+        <div class="scene-stage">PURCHASE</div>
+        <div class="scene-label">구매 완료</div>
+        <ul class="scene-notes"><li>쿠팡 / 스마트스토어</li><li>가격·쿠폰 결정적</li></ul>
+      </div>
+    </div>
+    </div>
+
+    <!-- Purchase Intent Graph -->
+    <div class="intent-wrap">
+      <div class="intent-label">Purchase Intent</div>
+      <svg class="intent-svg" viewBox="0 0 600 70" style="height:70px;">
+        <defs>
+          <linearGradient id="ig1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f39c12" stop-opacity=".15"/>
+            <stop offset="100%" stop-color="#f39c12" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- area fill -->
+        <path d="M50,55 C100,52 150,45 200,32 C240,22 280,28 320,42 C360,54 390,34 440,22 C490,12 540,10 580,8 L580,65 L50,65 Z" fill="url(#ig1)"/>
+        <!-- line -->
+        <path d="M50,55 C100,52 150,45 200,32 C240,22 280,28 320,42 C360,54 390,34 440,22 C490,12 540,10 580,8" fill="none" stroke="#f39c12" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- dots -->
+        <circle cx="50" cy="55" r="5" fill="#fff" stroke="#f39c12" stroke-width="2.5"/>
+        <circle cx="200" cy="32" r="5" fill="#fff" stroke="#f39c12" stroke-width="2.5"/>
+        <circle cx="320" cy="42" r="5" fill="#fff" stroke="#f39c12" stroke-width="2.5"/>
+        <circle cx="440" cy="22" r="6" fill="#f39c12" stroke="#f39c12" stroke-width="2"/>
+        <circle cx="580" cy="8" r="6" fill="#f39c12" stroke="#f39c12" stroke-width="2"/>
+        <!-- labels -->
+        <text x="50" y="18" text-anchor="middle" fill="#bbb" font-size="9" font-family="Noto Sans KR">기상</text>
+        <text x="200" y="18" text-anchor="middle" fill="#f39c12" font-size="9" font-family="Noto Sans KR" font-weight="700">카톡 인지</text>
+        <text x="320" y="18" text-anchor="middle" fill="#f39c12" font-size="9" font-family="Noto Sans KR" font-weight="700">검색</text>
+        <text x="440" y="12" text-anchor="middle" fill="#f39c12" font-size="9" font-family="Noto Sans KR" font-weight="700">재검색</text>
+        <text x="580" y="4" text-anchor="middle" fill="#f39c12" font-size="9" font-family="Noto Sans KR" font-weight="700">구매 ✓</text>
+      </svg>
+    </div>
+
+    <!-- Journey Grid -->
+    <div class="gtable-wrap">
+      <table class="gt">
+        <tr>
+          <td class="rl">단계</td>
+          <td class="sh">① 인지</td><td class="sh">② 관심</td><td class="sh">③ 검색</td>
+          <td class="sh">④ 비교·결정</td><td class="sh">⑤ 구매</td><td class="sh">⑥ 재구매</td>
+        </tr>
+        <tr>
+          <td class="rl">Place</td>
+          <td>TV·홈쇼핑<br>카톡 단체방</td><td>거실 TV<br>스마트폰</td><td>네이버 검색창<br>(점심시간)</td>
+          <td>네이버 쇼핑<br>상세페이지</td><td>쿠팡 앱<br>스마트스토어</td><td>쿠팡 주문내역</td>
+        </tr>
+        <tr>
+          <td class="rl">Action</td>
+          <td>지인 추천으로 제품명 인지</td><td>홈쇼핑 반복 노출<br>관심 증가</td><td>"알파CD" 직접 검색<br>지방 흡착 성분 확인</td>
+          <td>리뷰·가격·용량 비교<br>쿠폰·무료배송 확인</td><td>로켓배송 결제</td><td>효과 체감 후<br>검색 없이 재주문</td>
+        </tr>
+        <tr>
+          <td class="rl">감정</td>
+          <td class="em">😐</td><td class="em">🙂</td><td class="em">🔍</td>
+          <td class="em">🤔</td><td class="em">😊</td><td class="em">😄</td>
+        </tr>
+        <tr>
+          <td class="rl">Touch</td>
+          <td><span class="chip co">TV방송</span><span class="chip co">카카오톡</span></td>
+          <td><span class="chip co">홈쇼핑</span><span class="chip cb">유튜브</span></td>
+          <td><span class="chip cb">네이버 검색</span><span class="chip cb">파워링크</span></td>
+          <td><span class="chip cb">네이버 쇼핑</span><span class="chip cr">상세페이지</span></td>
+          <td><span class="chip cg">쿠팡</span><span class="chip cg">스마트스토어</span></td>
+          <td><span class="chip cg">쿠팡 앱</span><span class="chip cn">자사몰(미확인)</span></td>
+        </tr>
+        <tr>
+          <td class="rl">이슈</td>
+          <td><span class="chip bad2">검색량 -77% 급감</span></td>
+          <td><span class="chip warn">PPL 감소 우려</span></td>
+          <td><span class="chip good">전환율 전 연령 1위</span></td>
+          <td><span class="chip bad2">리뷰 부족 이탈</span></td>
+          <td><span class="chip bad2">쿠팡1P 소멸 공백</span></td>
+          <td><span class="chip bad2">CRM 없어 불투명</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Workshop bar -->
+    <div class="ws-bar">
+      <div class="ws-bar-label">Workshop<br>Core Questions</div>
+      <div class="ws-bar-q">쿠팡 1P 소멸 이후 "김미영"은 어디서 구매하는가? 이탈했는가? 검색량 -77% 상황에서 이 고객에게 다시 도달할 새로운 유입 트리거는 무엇인가?</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  ② 파라다이스그레인
+══════════════════════════════════════════ -->
+<div id="paradise" class="section">
+<div class="mg">
+  <div class="left">
+    <div class="pcard">
+      <div class="avt">🧍‍♀️</div>
+      <div class="ptag">🔥 지방 연소 다이어트</div>
+      <div class="pname">이정숙, 52세</div>
+      <div class="psub">경기도 신도시 · 전업주부/파트타임<br>부동산·급식보조 · 3인 가구 (대학생 자녀 동거)</div>
+      <div class="kpi-list">
+        <div class="kpi-row"><span class="kl">전환매출 비중</span><span class="kv">38.6% (전 연령 1위)</span></div>
+        <div class="kpi-row"><span class="kl">클릭당 전환</span><span class="kv">4,462원 (전제품 최고)</span></div>
+        <div class="kpi-row"><span class="kl">4월 공헌이익</span><span class="kv danger">-5,418만원 적자</span></div>
+        <div class="kpi-row"><span class="kl">비용 구조</span><span class="kv danger">광고48%+PPL28%</span></div>
+      </div>
+    </div>
+    <div class="qbox">
+      <h4>🎯 워크숍 핵심 질문</h4>
+      <p>검색량(+67%) 대비 매출(+5%)이 낮은 이유, 상세페이지의 어떤 요소가 이탈을 만드는가?</p>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <div class="jtitle">이정숙 님의 홈쇼핑 방영일 여정</div>
+      <div class="jsub">파라다이스그레인 · 지방 연소 다이어트 식품 (운동 힘든 중장년, 가족 건강 챙기는 타겟)</div>
+    </div>
+    <div class="scenes-wrap"><div class="scenes">
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#f0f6ff;"><svg viewBox="0 0 170 110"><rect x="20" y="20" width="130" height="75" rx="8" fill="#1a1a2e"/><rect x="26" y="26" width="118" height="60" rx="5" fill="#0f3460"/><text x="85" y="62" text-anchor="middle" font-size="26">📺</text><text x="85" y="80" text-anchor="middle" font-size="8" fill="#93c5fd">홈쇼핑 방송</text></svg></div>
+        <div class="scene-icon">📺</div>
+        <div class="scene-time">09:00 AM</div>
+        <div class="scene-stage">AWARENESS</div>
+        <div class="scene-label">홈쇼핑 방송</div>
+        <ul class="scene-notes"><li>지방 연소 효능 설명</li><li>나이 들어도 OK 메시지</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#93c5fd" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#1d6fd6;--pl:#edf4ff;--pb:#93c5fd;--pd:#1e3a8a;">
+        <div class="scene-illust" style="background:#edf4ff;"><svg viewBox="0 0 170 110"><rect x="25" y="15" width="120" height="80" rx="10" fill="#fff" stroke="#93c5fd" stroke-width="2"/><rect x="35" y="25" width="100" height="60" rx="7" fill="#f0f6ff"/><text x="85" y="55" text-anchor="middle" font-size="10" fill="#1d6fd6" font-weight="700">NAVER</text><text x="85" y="68" text-anchor="middle" font-size="8" fill="#888">파라다이스그레인</text></svg></div>
+        <div class="scene-badge" style="background:#1d6fd6;color:#fff;">검색 접점</div>
+        <div class="scene-time">10:00 AM</div>
+        <div class="scene-stage" style="color:#1d6fd6;">CONSIDERATION</div>
+        <div class="scene-label">지하철 검색</div>
+        <ul class="scene-notes"><li>방송 직후 즉시 검색</li><li>2/18 하루 53,600건</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#ef4444" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card bad">
+        <div class="scene-illust" style="background:#fef2f2;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="40">❌</text><text x="85" y="88" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="700">이탈</text></svg></div>
+        <div class="scene-badge" style="background:#ef4444;color:#fff;">⚠ 이탈 다수</div>
+        <div class="scene-time">11:00 AM</div>
+        <div class="scene-stage" style="color:#ef4444;">DROPOUT</div>
+        <div class="scene-label">상세페이지 이탈</div>
+        <ul class="scene-notes"><li>① 가격 부담 (60대 35.2% 응답)</li><li>② 리뷰 수 부족</li><li>③ 상세페이지 정보 약함</li><li>검색+67% vs 매출+5%</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#f0f6ff;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="36">🚶‍♀️</text></svg></div>
+        <div class="scene-time">01:00 PM</div>
+        <div class="scene-stage" style="color:#1d6fd6;">WANDERING</div>
+        <div class="scene-label">외출</div>
+        <ul class="scene-notes"><li>마트·병원·지인 모임</li><li>자녀에게도 "파라다이스 어때?" 물어봄</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#93c5fd" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#1d6fd6;--pl:#edf4ff;--pb:#93c5fd;--pd:#1e3a8a;">
+        <div class="scene-illust" style="background:#edf4ff;"><svg viewBox="0 0 170 110"><circle cx="85" cy="55" r="35" fill="#1d6fd6" opacity=".15"/><text x="85" y="63" text-anchor="middle" font-size="28">✅</text></svg></div>
+        <div class="scene-badge" style="background:#1d6fd6;color:#fff;">구매 완료</div>
+        <div class="scene-time">09:00 PM</div>
+        <div class="scene-stage" style="color:#1d6fd6;">PURCHASE</div>
+        <div class="scene-label">재검색 → 구매</div>
+        <ul class="scene-notes"><li>재방송 시청 후 결심</li><li>클릭당 전환 4,462원</li><li>자녀 것도 함께 주문</li></ul>
+      </div>
+    </div></div>
+    <div class="intent-wrap">
+      <div class="intent-label">Purchase Intent</div>
+      <svg class="intent-svg" viewBox="0 0 600 70" style="height:70px;">
+        <defs><linearGradient id="ig2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1d6fd6" stop-opacity=".15"/><stop offset="100%" stop-color="#1d6fd6" stop-opacity="0"/></linearGradient></defs>
+        <path d="M50,55 C100,45 150,28 200,22 C240,18 280,62 320,68 C350,70 380,58 420,38 C460,20 520,12 570,8 L570,70 L50,70 Z" fill="url(#ig2)"/>
+        <path d="M50,55 C100,45 150,28 200,22 C240,18 280,62 320,68 C350,70 380,58 420,38 C460,20 520,12 570,8" fill="none" stroke="#1d6fd6" stroke-width="2.5"/>
+        <path d="M230,22 L330,68" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3" opacity=".6"/>
+        <circle cx="50" cy="55" r="4" fill="#fff" stroke="#1d6fd6" stroke-width="2"/>
+        <circle cx="200" cy="22" r="5" fill="#1d6fd6"/>
+        <circle cx="300" cy="66" r="6" fill="#ef4444"/>
+        <circle cx="420" cy="38" r="4" fill="#fff" stroke="#1d6fd6" stroke-width="2"/>
+        <circle cx="570" cy="8" r="5" fill="#1d6fd6"/>
+        <text x="50" y="12" text-anchor="middle" fill="#bbb" font-size="9" font-family="Noto Sans KR">기상</text>
+        <text x="200" y="12" text-anchor="middle" fill="#1d6fd6" font-size="9" font-family="Noto Sans KR" font-weight="700">즉시검색</text>
+        <text x="300" y="56" text-anchor="middle" fill="#ef4444" font-size="9" font-family="Noto Sans KR" font-weight="700">⬇ 이탈</text>
+        <text x="420" y="28" text-anchor="middle" fill="#1d6fd6" font-size="9" font-family="Noto Sans KR" font-weight="700">재고려</text>
+        <text x="570" y="4" text-anchor="middle" fill="#1d6fd6" font-size="9" font-family="Noto Sans KR" font-weight="700">구매 ✓</text>
+      </svg>
+    </div>
+    <div class="gtable-wrap"><table class="gt">
+      <tr><td class="rl">단계</td>
+        <td class="sh" style="border-top-color:#1d6fd6;background:#edf4ff;color:#1e3a8a;">① 방송 시청</td>
+        <td class="sh" style="border-top-color:#1d6fd6;background:#edf4ff;color:#1e3a8a;">② 즉시 검색</td>
+        <td class="sh bad" style="border-top-color:#ef4444;background:#fef2f2;color:#991b1b;">③ 이탈(다수)</td>
+        <td class="sh" style="border-top-color:#1d6fd6;background:#edf4ff;color:#1e3a8a;">④ 재고려</td>
+        <td class="sh" style="border-top-color:#1d6fd6;background:#edf4ff;color:#1e3a8a;">⑤ 구매</td>
+        <td class="sh" style="border-top-color:#1d6fd6;background:#edf4ff;color:#1e3a8a;">⑥ 재구매?</td></tr>
+      <tr><td class="rl">Place</td>
+        <td>TV 거실<br>홈쇼핑 채널</td>
+        <td>스마트폰<br>네이버 검색창</td>
+        <td style="background:#fef9f9;">네이버 쇼핑<br>상세페이지</td>
+        <td>카카오톡<br>지인·자녀 대화</td>
+        <td>스마트스토어<br>쿠팡</td>
+        <td>CRM(미확인)</td></tr>
+      <tr><td class="rl">Action</td>
+        <td>홈쇼핑 시청<br>지방 연소 효능 청취</td>
+        <td>방송 직후<br>즉시 검색</td>
+        <td style="background:#fef9f9;">가격 확인 후 부담<br>리뷰 확인 후 불신<br>→ 이탈</td>
+        <td>지인에게 물어봄<br>재방송 접촉</td>
+        <td>결제 완료<br>4,462원/클릭</td>
+        <td>리마인드 없음<br>경쟁 제품 이동?</td></tr>
+      <tr><td class="rl">감정</td><td class="em">📺</td><td class="em">💡</td><td class="em" style="background:#fef9f9;">😕</td><td class="em">🤔</td><td class="em">😊</td><td class="em">❓</td></tr>
+      <tr><td class="rl">Touch</td>
+        <td><span class="chip co">TV홈쇼핑</span><span class="chip co">PPL</span></td>
+        <td><span class="chip cb">네이버 검색</span></td>
+        <td style="background:#fef9f9;"><span class="chip cr">상세페이지</span><span class="chip cr">리뷰</span><span class="chip cr">가격</span></td>
+        <td><span class="chip co">카카오톡</span></td>
+        <td><span class="chip cg">스마트스토어</span><span class="chip cg">쿠팡</span></td>
+        <td><span class="chip cn">자사몰(미확인)</span></td></tr>
+      <tr><td class="rl">이슈</td>
+        <td><span class="chip good">전 연령 홈쇼핑 반응</span></td>
+        <td><span class="chip good">방송→검색 즉각</span></td>
+        <td style="background:#fef9f9;"><span class="chip bad2">이탈 원인 미파악</span><span class="chip warn">가격?리뷰?상세페이지?</span></td>
+        <td><span class="chip warn">리타겟팅 필요</span></td>
+        <td><span class="chip good">사면 확실히 삼</span></td>
+        <td><span class="chip bad2">비용률 76% 구조</span></td></tr>
+    </table></div>
+    <div class="ws-bar" style="background:#1d6fd6;">
+      <div class="ws-bar-label">Workshop<br>Core Questions</div>
+      <div class="ws-bar-q">검색량(+67%) 대비 매출(+5%)이 낮은 이유는? 상세페이지·가격·리뷰 중 어디서 이탈하는가? 홈쇼핑 방송에서 바로 구매하는 동선이 설계되어 있는가?</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  ③ 프리바이오틱스
+══════════════════════════════════════════ -->
+<div id="pre" class="section">
+<div class="mg">
+  <div class="left">
+    <div class="pcard">
+      <div class="avt">🧑‍💻</div>
+      <div class="ptag">🦠 장건강 유산균 먹이</div>
+      <div class="pname">박소연, 43세</div>
+      <div class="psub">서울 마포구 · 프리랜서 디자이너<br>재택 주 3일 · 4인 가구 (초등·중학생)</div>
+      <div class="kpi-list">
+        <div class="kpi-row"><span class="kl">검색 1건당 매출</span><span class="kv">14,562원 (최고)</span></div>
+        <div class="kpi-row"><span class="kl">매출 방어율</span><span class="kv">-62%에도 -49% 방어</span></div>
+        <div class="kpi-row"><span class="kl">공헌이익률</span><span class="kv">34.8%</span></div>
+        <div class="kpi-row"><span class="kl">특징</span><span class="kv ok">검색없이 재구매</span></div>
+      </div>
+    </div>
+    <div class="qbox" style="border-color:#6ee7a8;border-left-color:#16a34a;">
+      <h4 style="color:#14532d;">🎯 워크숍 핵심 질문</h4>
+      <p>검색 없이 쿠팡에서만 사는 충성 고객의 데이터를 어떻게 자사몰로 유도할 것인가?</p>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <div class="jtitle">박소연 님의 충성 재구매 하루 여정</div>
+      <div class="jsub">프리바이오틱스 · 장건강 유산균 먹이 (이미 구매 고객)</div>
+    </div>
+    <div class="scenes-wrap"><div class="scenes">
+      <div class="scene-card key" style="--p:#16a34a;--pl:#edfaf3;--pb:#6ee7a8;--pd:#14532d;">
+        <div class="scene-illust" style="background:#edfaf3;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="36">💊</text><text x="85" y="88" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="700">아침 복용 습관화!</text></svg></div>
+        <div class="scene-badge" style="background:#16a34a;color:#fff;">습관화</div>
+        <div class="scene-time">06:30 AM</div>
+        <div class="scene-stage" style="color:#16a34a;">HABIT</div>
+        <div class="scene-label">아침 복용</div>
+        <ul class="scene-notes"><li>아이 등교 챙기면서</li><li>검색 없이 매일 복용</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#6ee7a8" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#edfaf3;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="32">📱</text></svg></div>
+        <div class="scene-time">07:30 AM</div>
+        <div class="scene-stage" style="color:#16a34a;">BROWSE</div>
+        <div class="scene-label">블로그·인스타</div>
+        <ul class="scene-notes"><li>건강 콘텐츠 소비</li><li>최초 인지 경로</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#edfaf3;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="32">💼</text></svg></div>
+        <div class="scene-time">09:00 AM</div>
+        <div class="scene-stage" style="color:#16a34a;">WORK</div>
+        <div class="scene-label">재택근무</div>
+        <ul class="scene-notes"><li>작업 중 틈틈이</li><li>스마트폰 체크</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#16a34a;--pl:#edfaf3;--pb:#6ee7a8;--pd:#14532d;">
+        <div class="scene-illust" style="background:#edfaf3;"><svg viewBox="0 0 170 110"><circle cx="85" cy="55" r="35" fill="#16a34a" opacity=".15"/><text x="85" y="63" text-anchor="middle" font-size="28">🛒</text></svg></div>
+        <div class="scene-badge" style="background:#16a34a;color:#fff;">재구매 핵심</div>
+        <div class="scene-time">12:00 PM</div>
+        <div class="scene-stage" style="color:#16a34a;">REPURCHASE</div>
+        <div class="scene-label">검색 없이 재주문</div>
+        <ul class="scene-notes"><li>쿠팡 앱 직접 접속</li><li>검색창 열지 않음!</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#edfaf3;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="32">👨‍👩‍👧</text></svg></div>
+        <div class="scene-time">03:00 PM</div>
+        <div class="scene-stage" style="color:#16a34a;">FAMILY</div>
+        <div class="scene-label">아이 하교</div>
+        <ul class="scene-notes"><li>아이 장 건강 영양제</li><li>가족 건강 매니저</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#6ee7a8" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#16a34a;--pl:#edfaf3;--pb:#6ee7a8;--pd:#14532d;">
+        <div class="scene-illust" style="background:#edfaf3;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="28">💬</text><text x="85" y="86" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="700">"진짜 좋더라"</text></svg></div>
+        <div class="scene-badge" style="background:#16a34a;color:#fff;">구전 발생</div>
+        <div class="scene-time">10:30 PM</div>
+        <div class="scene-stage" style="color:#16a34a;">ADVOCATE</div>
+        <div class="scene-label">카톡 구전</div>
+        <ul class="scene-notes"><li>지인에게 추천</li><li>신규 유입 경로</li></ul>
+      </div>
+    </div></div>
+    <div class="intent-wrap">
+      <div class="intent-label">Purchase Intent (안정적 고감정 유지)</div>
+      <svg class="intent-svg" viewBox="0 0 600 70" style="height:70px;">
+        <defs><linearGradient id="ig3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16a34a" stop-opacity=".12"/><stop offset="100%" stop-color="#16a34a" stop-opacity="0"/></linearGradient></defs>
+        <path d="M50,30 C120,24 170,20 230,18 C290,16 350,20 400,18 C460,16 510,14 560,12 L560,70 L50,70 Z" fill="url(#ig3)"/>
+        <path d="M50,30 C120,24 170,20 230,18 C290,16 350,20 400,18 C460,16 510,14 560,12" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+        <circle cx="50" cy="30" r="5" fill="#16a34a"/>
+        <circle cx="230" cy="18" r="6" fill="#16a34a"/>
+        <circle cx="400" cy="18" r="5" fill="#16a34a"/>
+        <circle cx="560" cy="12" r="6" fill="#16a34a"/>
+        <text x="50" y="48" text-anchor="middle" fill="#16a34a" font-size="9" font-family="Noto Sans KR" font-weight="700">아침 복용</text>
+        <text x="230" y="8" text-anchor="middle" fill="#16a34a" font-size="9" font-family="Noto Sans KR" font-weight="700">재주문</text>
+        <text x="400" y="8" text-anchor="middle" fill="#16a34a" font-size="9" font-family="Noto Sans KR" font-weight="700">충성 유지</text>
+        <text x="560" y="4" text-anchor="middle" fill="#16a34a" font-size="9" font-family="Noto Sans KR" font-weight="700">구전 발생</text>
+        <text x="300" y="58" text-anchor="middle" fill="#bbb" font-size="9" font-family="Noto Sans KR">── 안정적 고감정 유지 ──</text>
+      </svg>
+    </div>
+    <div class="gtable-wrap"><table class="gt">
+      <tr><td class="rl">단계</td>
+        <td class="sh" style="border-top-color:#16a34a;background:#edfaf3;color:#14532d;">① 첫 인지</td>
+        <td class="sh" style="border-top-color:#16a34a;background:#edfaf3;color:#14532d;">② 첫 구매</td>
+        <td class="sh" style="border-top-color:#16a34a;background:#edfaf3;color:#14532d;">③ 효과 체감</td>
+        <td class="sh" style="border-top-color:#16a34a;background:#edfaf3;color:#14532d;">④ 검색 없이 재주문</td>
+        <td class="sh" style="border-top-color:#16a34a;background:#edfaf3;color:#14532d;">⑤ 구전 발생</td></tr>
+      <tr><td class="rl">Place</td>
+        <td>네이버 블로그<br>인스타그램</td>
+        <td>네이버 쇼핑<br>쿠팡</td>
+        <td>집 (복용 중)</td>
+        <td>쿠팡 앱 직접<br>자사몰(추정)</td>
+        <td>카카오톡<br>SNS</td></tr>
+      <tr><td class="rl">Action</td>
+        <td>건강 콘텐츠 탐색 중<br>장건강 유산균 발견</td>
+        <td>리뷰 꼼꼼히 확인<br>첫 구매</td>
+        <td>2~4주 복용 후<br>장 건강 개선 체감</td>
+        <td>검색 없이 앱에서<br>바로 재주문</td>
+        <td>"이 유산균 좋더라"<br>지인·가족 추천</td></tr>
+      <tr><td class="rl">감정</td><td class="em">🔍</td><td class="em">😊</td><td class="em">😄</td><td class="em">😄</td><td class="em">🌟</td></tr>
+      <tr><td class="rl">Touch</td>
+        <td><span class="chip cb">네이버 블로그</span><span class="chip cp">인스타</span></td>
+        <td><span class="chip cb">네이버 쇼핑</span><span class="chip cg">쿠팡</span></td>
+        <td><span class="chip cg">제품 자체</span></td>
+        <td><span class="chip cg">쿠팡 앱</span><span class="chip cn">자사몰(미확인)</span></td>
+        <td><span class="chip co">카카오톡</span><span class="chip cp">인스타</span></td></tr>
+      <tr><td class="rl">이슈</td>
+        <td><span class="chip good">35~39세 비중도 높음</span></td>
+        <td><span class="chip good">첫 구매 전환 양호</span></td>
+        <td><span class="chip good">효과 체감이 충성화 핵심</span></td>
+        <td><span class="chip bad2">자사몰 vs 쿠팡 미파악</span><span class="chip bad2">쿠팡이면 연락처 없음</span></td>
+        <td><span class="chip good">구전으로 신규 유입</span><span class="chip good">가족 패키지 객단가↑</span></td></tr>
+    </table></div>
+    <div class="ws-bar" style="background:#16a34a;">
+      <div class="ws-bar-label">Workshop<br>Core Questions</div>
+      <div class="ws-bar-q">검색 없이 쿠팡에서만 사는 충성 고객의 연락처를 어떻게 확보할 것인가? CRM 접점이 장기 수익성을 결정한다.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  ④ 맥주효모
+══════════════════════════════════════════ -->
+<div id="yeast" class="section">
+<div class="mg">
+  <div class="left">
+    <div class="pcard">
+      <div class="avt">🧑‍🦳</div>
+      <div class="ptag">🌾 비오틴, 탈모·모발 건강</div>
+      <div class="pname">정현옥, 56세</div>
+      <div class="psub">부산 해운대구 · 식당 보조/전업주부<br>2인 가구 (자녀 독립)</div>
+      <div class="kpi-list">
+        <div class="kpi-row"><span class="kl">공헌이익률</span><span class="kv">55.3% (최우수)</span></div>
+        <div class="kpi-row"><span class="kl">ROAS</span><span class="kv">1,056% (4월)</span></div>
+        <div class="kpi-row"><span class="kl">검색 1건당 매출</span><span class="kv">3,190~3,325원</span></div>
+        <div class="kpi-row"><span class="kl">특징</span><span class="kv ok">검색=매출 1:1 연동</span></div>
+      </div>
+    </div>
+    <div class="qbox" style="border-color:#fca07a;border-left-color:#ea580c;">
+      <h4 style="color:#7c2d12;">🎯 워크숍 핵심 질문</h4>
+      <p>오프라인 구전(추천)을 온라인 검색으로 더 강력하게 연결할 트리거는?<br>건강 블로그 SEO + 검색광고 확대가 답인가?</p>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <div class="jtitle">정현옥 님의 검색 즉시 구매 여정</div>
+      <div class="jsub">맥주효모 · 비오틴, 탈모·모발 건강 (검색-매출 완전 연동형)</div>
+    </div>
+    <div class="scenes-wrap"><div class="scenes">
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#fff5f0;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="36">🌅</text></svg></div>
+        <div class="scene-time">05:30 AM</div>
+        <div class="scene-stage" style="color:#ea580c;">WAKE UP</div>
+        <div class="scene-label">이른 기상</div>
+        <ul class="scene-notes"><li>50대 후반 이른 기상</li><li>TV 아침 방송 시청</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#fca07a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#ea580c;--pl:#fff1ee;--pb:#fca07a;--pd:#7c2d12;">
+        <div class="scene-illust" style="background:#fff1ee;"><svg viewBox="0 0 170 110"><text x="85" y="60" text-anchor="middle" font-size="28">👥</text><text x="85" y="82" text-anchor="middle" font-size="9" fill="#ea580c" font-weight="700">"머리카락 좋아졌어"</text></svg></div>
+        <div class="scene-badge" style="background:#ea580c;color:#fff;">인지 접점</div>
+        <div class="scene-time">09:00 AM</div>
+        <div class="scene-stage" style="color:#ea580c;">AWARENESS</div>
+        <div class="scene-label">동호회 지인 추천</div>
+        <ul class="scene-notes"><li>걷기 동호회·병원</li><li>구체적 체험담</li><li>가장 강한 트리거</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#ea580c;--pl:#fff1ee;--pb:#fca07a;--pd:#7c2d12;">
+        <div class="scene-illust" style="background:#fff1ee;"><svg viewBox="0 0 170 110"><rect x="25" y="15" width="120" height="80" rx="10" fill="#fff" stroke="#fca07a" stroke-width="2"/><text x="85" y="55" text-anchor="middle" font-size="10" fill="#ea580c" font-weight="700">NAVER</text><text x="85" y="68" text-anchor="middle" font-size="8" fill="#888">맥주효모</text><text x="145" y="30" text-anchor="middle" font-size="14">🔍</text></svg></div>
+        <div class="scene-badge" style="background:#ea580c;color:#fff;">검색→즉시 구매</div>
+        <div class="scene-time">11:00 AM</div>
+        <div class="scene-stage" style="color:#ea580c;">PURCHASE</div>
+        <div class="scene-label">검색 → 즉시 구매</div>
+        <ul class="scene-notes"><li>귀가 후 바로 검색</li><li>3,190~3,325원/건</li><li>4개월 완벽 1:1 연동</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#fff5f0;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="32">📺</text></svg></div>
+        <div class="scene-time">06:00 PM</div>
+        <div class="scene-stage" style="color:#ea580c;">REINFORCEMENT</div>
+        <div class="scene-label">건강 프로그램</div>
+        <ul class="scene-notes"><li>생로병사·천기누설</li><li>비오틴 탈모 내용</li><li>다음 날 재검색 트리거</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#fff5f0;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="32">📞</text></svg></div>
+        <div class="scene-time">09:00 PM</div>
+        <div class="scene-stage" style="color:#ea580c;">FAMILY</div>
+        <div class="scene-label">자녀 통화</div>
+        <ul class="scene-notes"><li>자녀가 쿠팡 대리주문</li><li>추가 구매 채널</li></ul>
+      </div>
+    </div></div>
+    <div class="intent-wrap">
+      <div class="intent-label">Purchase Intent (검색 즉시 구매 — 4개월 안정)</div>
+      <svg class="intent-svg" viewBox="0 0 600 70" style="height:70px;">
+        <defs><linearGradient id="ig4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ea580c" stop-opacity=".12"/><stop offset="100%" stop-color="#ea580c" stop-opacity="0"/></linearGradient></defs>
+        <path d="M50,58 C110,50 160,40 220,24 C260,12 280,10 320,10 C360,10 400,18 450,30 C490,40 530,35 570,30 L570,70 L50,70 Z" fill="url(#ig4)"/>
+        <path d="M50,58 C110,50 160,40 220,24 C260,12 280,10 320,10 C360,10 400,18 450,30 C490,40 530,35 570,30" fill="none" stroke="#ea580c" stroke-width="2.5"/>
+        <circle cx="50" cy="58" r="4" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+        <circle cx="220" cy="24" r="5" fill="#ea580c"/>
+        <circle cx="320" cy="10" r="7" fill="#ea580c"/>
+        <circle cx="450" cy="30" r="4" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+        <text x="50" y="50" text-anchor="middle" fill="#bbb" font-size="9" font-family="Noto Sans KR">기상</text>
+        <text x="220" y="14" text-anchor="middle" fill="#ea580c" font-size="9" font-family="Noto Sans KR" font-weight="700">지인 추천</text>
+        <text x="320" y="4" text-anchor="middle" fill="#ea580c" font-size="9" font-family="Noto Sans KR" font-weight="700">검색→즉구매!</text>
+        <text x="450" y="22" text-anchor="middle" fill="#ea580c" font-size="9" font-family="Noto Sans KR" font-weight="700">건강TV 재트리거</text>
+      </svg>
+    </div>
+    <div class="gtable-wrap"><table class="gt">
+      <tr><td class="rl">단계</td>
+        <td class="sh" style="border-top-color:#ea580c;background:#fff1ee;color:#7c2d12;">① 검색 트리거</td>
+        <td class="sh" style="border-top-color:#ea580c;background:#fff1ee;color:#7c2d12;">② 즉시 검색</td>
+        <td class="sh" style="border-top-color:#ea580c;background:#fff1ee;color:#7c2d12;">③ 빠른 결정</td>
+        <td class="sh" style="border-top-color:#ea580c;background:#fff1ee;color:#7c2d12;">④ 구매</td>
+        <td class="sh" style="border-top-color:#ea580c;background:#fff1ee;color:#7c2d12;">⑤ 안정적 재구매</td></tr>
+      <tr><td class="rl">Place</td>
+        <td>동호회·병원<br>TV 건강 프로그램</td>
+        <td>네이버 검색창</td>
+        <td>네이버 쇼핑<br>상세페이지</td>
+        <td>쿠팡<br>스마트스토어</td>
+        <td>쿠팡 앱<br>자사몰(추정)</td></tr>
+      <tr><td class="rl">Action</td>
+        <td>지인 체험담<br>건강 프로그램 시청</td>
+        <td>"맥주효모" 직접 검색<br>비오틴 성분 확인</td>
+        <td>오래 고민 없이<br>익숙한 채널 결제</td>
+        <td>결제 완료<br>공헌이익 55.3%</td>
+        <td>2~3개월 주기<br>자녀 대리주문도</td></tr>
+      <tr><td class="rl">감정</td><td class="em">💭</td><td class="em">🔍</td><td class="em">😌</td><td class="em">😊</td><td class="em">😄</td></tr>
+      <tr><td class="rl">Touch</td>
+        <td><span class="chip co">지인 추천</span><span class="chip co">건강 TV</span></td>
+        <td><span class="chip cb">네이버 검색</span><span class="chip cb">파워링크</span></td>
+        <td><span class="chip cb">네이버 쇼핑</span><span class="chip cr">상세페이지</span></td>
+        <td><span class="chip cg">쿠팡</span></td>
+        <td><span class="chip cg">쿠팡 앱</span><span class="chip cn">자사몰</span></td></tr>
+      <tr><td class="rl">이슈</td>
+        <td><span class="chip good">트리거 늘리면 즉각 매출↑</span></td>
+        <td><span class="chip good">4개월 안정 전환률</span></td>
+        <td><span class="chip good">이탈률 낮음</span></td>
+        <td><span class="chip good">공헌이익 55.3% 최우수</span></td>
+        <td><span class="chip bad2">CRM 없으면 재구매 미파악</span><span class="chip good">구독 전환 LTV↑</span></td></tr>
+    </table></div>
+    <div class="ws-bar" style="background:#ea580c;">
+      <div class="ws-bar-label">Workshop<br>Core Questions</div>
+      <div class="ws-bar-q">오프라인 구전을 온라인 검색으로 연결할 트리거는 무엇인가? 건강 블로그 SEO 강화 + 네이버 검색광고 확대가 가장 예측 가능한 성장 레버다.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+  ⑤ 그린아세로라
+══════════════════════════════════════════ -->
+<div id="green" class="section">
+<div class="mg">
+  <div class="left">
+    <div class="pcard">
+      <div class="avt">🧑‍💼</div>
+      <div class="ptag">🍊 천연 비타민C, 항산화·안티에이징</div>
+      <div class="pname">최윤지, 39세 <span style="font-size:10px;background:#fdf4ff;color:#9333ea;border:1px solid #d8b4fe;border-radius:10px;padding:1px 7px;">4월 신규</span></div>
+      <div class="psub">서울 성동구 · 마케팅팀 대리<br>1~2인 가구</div>
+      <div class="kpi-list">
+        <div class="kpi-row"><span class="kl">ROAS</span><span class="kv">1,814% (최고)</span></div>
+        <div class="kpi-row"><span class="kl">광고비 1억당</span><span class="kv">4.26억 전환</span></div>
+        <div class="kpi-row"><span class="kl">공헌이익률</span><span class="kv">21.5% (초기)</span></div>
+        <div class="kpi-row"><span class="kl">위험 요소</span><span class="kv danger">리뷰 부족 이탈 위험</span></div>
+      </div>
+    </div>
+    <div class="qbox" style="border-color:#d8b4fe;border-left-color:#9333ea;">
+      <h4 style="color:#4c1d95;">🎯 워크숍 핵심 질문</h4>
+      <p>초기 고효율 매체(인스타) 유입 고객을 안착시키기 위한 리뷰 시딩 전략은?<br>30~44세 타겟 확장의 핵심 레버는?</p>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <div class="jtitle">최윤지 님의 직장인 출근일 여정</div>
+      <div class="jsub">그린아세로라 · 천연 비타민C, 항산화·안티에이징 (4월 신규 · 얼리어답터형)</div>
+    </div>
+    <div class="scenes-wrap"><div class="scenes">
+      <div class="scene-card key" style="--p:#9333ea;--pl:#fdf4ff;--pb:#d8b4fe;--pd:#4c1d95;">
+        <div class="scene-illust" style="background:#fdf4ff;"><svg viewBox="0 0 170 110"><rect x="40" y="20" width="90" height="70" rx="12" fill="#fff" stroke="#d8b4fe" stroke-width="2"/><rect x="48" y="28" width="74" height="54" rx="9" fill="#faf5ff"/><text x="85" y="62" text-anchor="middle" font-size="22">📱</text><text x="85" y="80" text-anchor="middle" font-size="8" fill="#9333ea" font-weight="700">Instagram</text></svg></div>
+        <div class="scene-badge" style="background:#9333ea;color:#fff;">인지 접점</div>
+        <div class="scene-icon">📱</div>
+        <div class="scene-time">07:00 AM</div>
+        <div class="scene-stage" style="color:#9333ea;">AWARENESS</div>
+        <div class="scene-label">인스타 인지 (❶)</div>
+        <ul class="scene-notes"><li>인스타 인지고 천연 비타민C 추천!</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#9333ea" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#9333ea;--pl:#fdf4ff;--pb:#d8b4fe;--pd:#4c1d95;">
+        <div class="scene-illust" style="background:#fdf4ff;"><svg viewBox="0 0 170 110"><rect x="25" y="15" width="120" height="80" rx="10" fill="#fff" stroke="#d8b4fe" stroke-width="2"/><text x="85" y="55" text-anchor="middle" font-size="10" fill="#9333ea" font-weight="700">그린아세로라</text><text x="85" y="70" text-anchor="middle" font-size="8" fill="#888">🔍 검색 중...</text><text x="25" y="40" text-anchor="middle" font-size="9" fill="#aaa">30~44세 반응 강함</text></svg></div>
+        <div class="scene-badge" style="background:#9333ea;color:#fff;">검색 접점</div>
+        <div class="scene-icon">🔍</div>
+        <div class="scene-time">08:00 AM</div>
+        <div class="scene-stage" style="color:#9333ea;">CONSIDERATION</div>
+        <div class="scene-label">지하철 검색 (🔍)</div>
+        <ul class="scene-notes"><li>지하철 검색 후 검색</li><li>검색 완료 즉시 환료</li><li>30~44세 반응 강함</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#e8e4dc" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card">
+        <div class="scene-illust" style="background:#faf5ff;"><svg viewBox="0 0 170 110"><text x="85" y="65" text-anchor="middle" font-size="32">💼</text></svg></div>
+        <div class="scene-time">12:00 PM</div>
+        <div class="scene-stage" style="color:#9333ea;">REINFORCEMENT</div>
+        <div class="scene-label">사무실 근무 (📺)</div>
+        <ul class="scene-notes"><li>식당 식사 시간 때에</li><li>노가밀 부산 정체</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#9333ea" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card key" style="--p:#9333ea;--pl:#fdf4ff;--pb:#d8b4fe;--pd:#4c1d95;">
+        <div class="scene-illust" style="background:#fdf4ff;"><svg viewBox="0 0 170 110"><circle cx="85" cy="55" r="35" fill="#9333ea" opacity=".15"/><text x="85" y="63" text-anchor="middle" font-size="28">🛒</text></svg></div>
+        <div class="scene-badge" style="background:#9333ea;color:#fff;">구매 완료</div>
+        <div class="scene-icon">🛒</div>
+        <div class="scene-time">09:00 PM</div>
+        <div class="scene-stage" style="color:#9333ea;">DECISION</div>
+        <div class="scene-label">충동 구매 (🛒)</div>
+        <ul class="scene-notes"><li>Compare reviews</li><li>Prices and price</li><li>쿠팡 / 스마트스토어</li></ul>
+      </div>
+      <div class="sc-arrow"><svg viewBox="0 0 28 28"><path d="M6 14h16M16 8l6 6-6 6" stroke="#fca5a5" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="scene-card bad">
+        <div class="scene-illust" style="background:#fef2f2;"><svg viewBox="0 0 170 110"><text x="85" y="55" text-anchor="middle" font-size="24">⚠️</text><text x="85" y="78" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="700">리뷰 없음</text></svg></div>
+        <div class="scene-badge">⚠ 위험</div>
+        <div class="scene-time">10:00 PM</div>
+        <div class="scene-stage" style="color:#ef4444;">PURCHASE</div>
+        <div class="scene-label">리뷰 부족 경고 (⚠)</div>
+        <ul class="scene-notes"><li>DaysOn Alpha CD -<br>Order Complete</li><li>일반 고객 이탈 위험!</li><li>리뷰 시딩 시급</li></ul>
+      </div>
+    </div></div>
+    <div class="intent-wrap">
+      <div class="intent-label">Purchase Intent</div>
+      <svg class="intent-svg" viewBox="0 0 600 70" style="height:70px;">
+        <defs><linearGradient id="ig5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9333ea" stop-opacity=".12"/><stop offset="100%" stop-color="#9333ea" stop-opacity="0"/></linearGradient></defs>
+        <path d="M50,55 C100,45 150,25 210,15 C250,8 280,18 330,32 C370,44 400,30 460,20 C490,14 520,28 560,45 L560,70 L50,70 Z" fill="url(#ig5)"/>
+        <path d="M50,55 C100,45 150,25 210,15 C250,8 280,18 330,32 C370,44 400,30 460,20 C490,14 520,28 560,45" fill="none" stroke="#9333ea" stroke-width="2.5"/>
+        <circle cx="50" cy="55" r="4" fill="#fff" stroke="#9333ea" stroke-width="2"/>
+        <circle cx="210" cy="15" r="6" fill="#9333ea"/>
+        <circle cx="330" cy="32" r="4" fill="#fff" stroke="#9333ea" stroke-width="2"/>
+        <circle cx="460" cy="20" r="6" fill="#9333ea"/>
+        <circle cx="560" cy="45" r="5" fill="#ef4444"/>
+        <text x="50" y="46" text-anchor="middle" fill="#bbb" font-size="9" font-family="Noto Sans KR">기상</text>
+        <text x="210" y="8" text-anchor="middle" fill="#9333ea" font-size="9" font-family="Noto Sans KR" font-weight="700">인스타 인지</text>
+        <text x="330" y="24" text-anchor="middle" fill="#9333ea" font-size="9" font-family="Noto Sans KR" font-weight="700">검색</text>
+        <text x="460" y="12" text-anchor="middle" fill="#9333ea" font-size="9" font-family="Noto Sans KR" font-weight="700">구매 ✓</text>
+        <text x="560" y="36" text-anchor="middle" fill="#ef4444" font-size="9" font-family="Noto Sans KR" font-weight="700">리뷰 위험⚠</text>
+      </svg>
+    </div>
+    <div class="gtable-wrap"><table class="gt">
+      <tr><td class="rl">단계</td>
+        <td class="sh" style="border-top-color:#9333ea;background:#fdf4ff;color:#4c1d95;">① 인스타 인지</td>
+        <td class="sh" style="border-top-color:#9333ea;background:#fdf4ff;color:#4c1d95;">② 검색(30~44세 강)</td>
+        <td class="sh" style="border-top-color:#9333ea;background:#fdf4ff;color:#4c1d95;">③ 빠른 결정</td>
+        <td class="sh" style="border-top-color:#9333ea;background:#fdf4ff;color:#4c1d95;">④ 구매</td>
+        <td class="sh bad">⑤ 리뷰 부족 위험</td>
+        <td class="sh" style="border-top-color:#9333ea;background:#fdf4ff;color:#4c1d95;">⑥ 재구매·확장</td></tr>
+      <tr><td class="rl">Place</td>
+        <td>인스타그램<br>유튜브 숏폼</td>
+        <td>네이버 검색창<br>(지하철 중)</td>
+        <td>네이버 쇼핑<br>상세페이지</td>
+        <td>네이버 쇼핑<br>쿠팡</td>
+        <td style="background:#fef9f9;">집 (복용 중)<br>리뷰 작성 여부?</td>
+        <td>자사몰·쿠팡<br>인스타 구전</td></tr>
+      <tr><td class="rl">Action</td>
+        <td>인플루언서<br>"그린아세로라 추천"</td>
+        <td>비타민C·항산화<br>키워드 검색</td>
+        <td>얼리어답터<br>빠른 구매 결정</td>
+        <td>결제 완료<br>ROAS 1,814%</td>
+        <td style="background:#fef9f9;">복용 후기 생성 중<br>리뷰 축적 단계</td>
+        <td>재구매 + 30~44세<br>타겟 확장 핵심</td></tr>
+      <tr><td class="rl">감정</td><td class="em">🆕</td><td class="em">🔍</td><td class="em">⚡</td><td class="em">😊</td><td class="em" style="background:#fef9f9;">❓</td><td class="em">🌱</td></tr>
+      <tr><td class="rl">Touch</td>
+        <td><span class="chip cp">인스타그램</span><span class="chip cp">유튜브</span></td>
+        <td><span class="chip cb">네이버 검색</span><span class="chip cb">블로그</span></td>
+        <td><span class="chip cr">리뷰(부족)</span><span class="chip cb">상세페이지</span></td>
+        <td><span class="chip cb">파워링크</span><span class="chip cg">쿠팡</span></td>
+        <td style="background:#fef9f9;"><span class="chip cr">리뷰 작성</span></td>
+        <td><span class="chip cg">자사몰</span><span class="chip cp">인스타 구전</span></td></tr>
+      <tr><td class="rl">이슈</td>
+        <td><span class="chip good">30~44세 유입 신호</span></td>
+        <td><span class="chip good">SNS 채널 확장 가능</span></td>
+        <td><span class="chip bad2">리뷰 부족 → 이탈</span></td>
+        <td><span class="chip good">ROAS 1,814% 최고</span></td>
+        <td style="background:#fef9f9;"><span class="chip bad2">리뷰 축적 속도가 재구매율 결정</span></td>
+        <td><span class="chip good">데이즈온 최초 40대초 고객</span></td></tr>
+    </table></div>
+    <div class="ws-bar" style="background:#9333ea;">
+      <div class="ws-bar-label">Workshop<br>Core Questions</div>
+      <div class="ws-bar-q">30~44세의 강한 검색 반응을 구매로 연결할 콘텐츠·채널 전략은? 인스타 인플루언서 + 리뷰 시딩 조합이 초기 전환 핵심 레버인가?</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function showTab(id, btn, p, pl, pb, pd) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.borderColor='';b.style.color='';});
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  btn.style.background=p; btn.style.borderColor=p; btn.style.color='#fff';
+  document.documentElement.style.setProperty('--p',p);
+  document.documentElement.style.setProperty('--pl',pl);
+  document.documentElement.style.setProperty('--pb',pb);
+  document.documentElement.style.setProperty('--pd',pd);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
